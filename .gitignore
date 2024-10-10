@@ -1,2 +1,5 @@
 venv/
+chrome_profile/
+downloaded_files/
 test_emex.py
+test_google.py
