@@ -1,6 +1,5 @@
-from seleniumbase import Driver, SB, BaseCase
+from seleniumbase import SB
 from pathlib import Path
-from datetime import datetime
 from selenium.common.exceptions import NoSuchElementException
 import os
 import re
@@ -8,7 +7,7 @@ import csv
 from variables import oems
 import time
 
-class Parser(BaseCase):
+class Parser():
 
 	def __init__(self, proxy=False):
 		
