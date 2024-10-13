@@ -1,5 +1,9 @@
 venv/
+__pycache__/
 chrome_profile/
 downloaded_files/
+datas/
 test_emex.py
 test_google.py
+variables.py
+test.py
