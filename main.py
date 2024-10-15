@@ -73,18 +73,22 @@ class Parser():
 		Path(f'{user_data}First Run').touch()
 		return user_data
 
-	def save_to_csv(self, row):
+	def save_to_csv(self, row, delimiter=';;'):
 		with open('datas/emex.csv', 'a', newline='', encoding='utf-8') as f:
-			writer = csv.writer(f, delimiter=';')
-			writer.writerow(row)
+			f.write(delimiter.join(row)+'\n')
 			self.saved_in_session += 1
 
-	def get_last_oem_from_csv(self):
+
+	def get_last_oem_from_csv(self, delimiter=';;'):
 		with open('datas\\emex.csv', 'r', newline='', encoding='utf-8') as f:
-			reader = f.readlines()[-1].split(';')
-			last_oem = reader[1]
-			return last_oem
-	
+			try:
+				reader = f.read().splitlines()
+				last_oem = reader[-1].split(delimiter)[1]
+				return last_oem
+			except IndexError:
+				print('csv файл пуст')
+				return None
+
 	def change_proxy(self):
 		self.changes_of_proxy += 1
 		print(f'смена прокси номер {self.changes_of_proxy}')
