@@ -372,4 +372,4 @@ class Parser():
 		return None
 if __name__ == '__main__':
 
-	test = Parser(not_first_setup=False, proxies=proxies, type_headless=False)
+	test = Parser(not_first_setup=False, proxies=proxies, type_headless=True)
