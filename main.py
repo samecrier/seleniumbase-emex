@@ -15,10 +15,11 @@ class Parser():
 
 	VARIABLE_FOR_CHANGE_SERVER = 550
 
-	def __init__(self, not_first_setup=True, proxies=False, type_headless=True, oems=oems):
+	def __init__(self, not_first_setup=True, input=False, proxies=False, type_headless=True, oems=oems):
 		
 		self.type_headless = type_headless
 		#check user data
+		self.input = input
 		self.user_data = self.launch_user_data()
 		self.not_first_setup = not_first_setup #берет полный лист без анализа csv
 		self.saved_in_session = 0
@@ -121,9 +122,12 @@ class Parser():
 	def main_process(self):
 		#initiliaze browser
 		while self.oems:
+			
 			self.refresh_list_oems() #обновляю список нужных оемов
 			self.request_counter = 0 #счетчик запросов
 			with SB(user_data_dir=self.user_data, uc=True, proxy=self.proxy, page_load_strategy="eager", headless2=self.type_headless) as sb:
+				if self.input:
+					x = input('Введите Enter для начала:')
 				self.driver = sb
 				self.driver.set_window_position(0,0)
 				self.driver.set_window_size(1430, 1100)
@@ -372,4 +376,4 @@ class Parser():
 		return None
 if __name__ == '__main__':
 
-	test = Parser(not_first_setup=False, proxies=proxies, type_headless=True)
+	test = Parser(not_first_setup=False, input=False, proxies=proxies, type_headless=True)
