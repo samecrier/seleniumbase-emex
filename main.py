@@ -1,4 +1,4 @@
-from seleniumbase import SB
+from seleniumbase import SB, BaseCase
 from pathlib import Path
 from seleniumbase.common.exceptions import NoSuchElementException as sb_NoSuchElementException, WebDriverException as sb_WebDriverException
 from selenium.common.exceptions import NoSuchElementException , WebDriverException
@@ -21,7 +21,7 @@ class Parser():
 		#check user data
 		self.user_data = self.launch_user_data()
 		self.not_first_setup = not_first_setup #берет полный лист без анализа csv
-		
+		self.saved_in_session = 0
 		self.oems = sorted(set(oems), key=oems.index)
 		self.circle_proxy_list = []
 		self.proxies = proxies
@@ -33,7 +33,16 @@ class Parser():
 			print(f'запустил без прокси')
 		
 		self.changes_of_proxy = 0
-		self.main_process()
+		while self.oems:
+			try:
+				self.main_process()
+			except Exception as e:
+				current_time = datetime.now().strftime("%H:%M:%S")
+				error = f'{type(e)} + {e}'
+				row = ['sku_', self.oem, error, 'ошибка', 'ошибка', 'ошибка', self.proxy, current_time]
+				self.save_to_csv(row)
+
+
 		
 	@staticmethod
 	def benchmark(func):
@@ -68,6 +77,7 @@ class Parser():
 		with open('datas/emex.csv', 'a', newline='', encoding='utf-8') as f:
 			writer = csv.writer(f, delimiter=';')
 			writer.writerow(row)
+			self.saved_in_session += 1
 
 	def get_last_oem_from_csv(self):
 		with open('datas\\emex.csv', 'r', newline='', encoding='utf-8') as f:
@@ -88,7 +98,7 @@ class Parser():
 				self.proxies = self.circle_proxy_list[:]
 				self.circle_proxy_list = []
 				self.proxy = self.proxies.pop(0)
-				print(f'использую {self.proxy}')
+				print(f'использую {self.proxy}, смена прокси номер {self.changes_of_proxy}')
 			else:
 				self.proxy = 'error'
 				print('что-то прокси закончились')
@@ -114,11 +124,11 @@ class Parser():
 				self.driver.set_window_position(0,0)
 				self.driver.set_window_size(1430, 1100)
 				#логика приложения вместо __name__=='__main__'
-				for sku, main_oem in enumerate(self.oems):
+				for sku, self.oem in enumerate(self.oems):
 					current_time = datetime.now().strftime("%H:%M:%S")
-					print(f'{sku}, {main_oem}, {current_time}, запросов {self.request_counter}')
+					print(f'{sku}, {self.oem}, {current_time}, сохранено {self.saved_in_session}')
 					if self.request_counter == 0 or self.request_counter % self.VARIABLE_FOR_CHANGE_SERVER != 0:
-						check_to_change_proxy = self.first_page(sku, main_oem)
+						check_to_change_proxy = self.first_page(sku, self.oem)
 						if check_to_change_proxy:
 							break
 					else:
@@ -144,6 +154,7 @@ class Parser():
 				return None
 			if analog_descriptions_list != []:
 				analogs_descriptions_list = analogs_descriptions_list[:] + analog_descriptions_list[:]
+
 			brands.append(brand)
 			description_row = brand + ' && ' + description
 			descriptions.append(description_row)
@@ -179,7 +190,8 @@ class Parser():
 			oem_variable = self.driver.get_text('xpath', f'//div[contains(@class, "brand-list")]//div[{i+1}][contains(@class, "row")]//span[contains(@class, "link-like")]', timeout=10)
 			if oem_variable == '':
 				continue
-			self.driver.click_if_visible('xpath', f'//div[contains(@class, "brand-list")]//div[{i+1}][contains(@class, "row")]', timeout=10)
+			
+			self.driver.js_click(f'div.brand-list > div:nth-child({i+1})')
 
 			try:
 				self.driver.wait_for_element_present('//span[contains(@data-bind, "click: emex.find.brandList.showBrandsDialog")]', 'xpath', timeout=10)
