@@ -45,21 +45,21 @@ class Parser():
 		self.all_requests = 0
 		
 		while self.oems or self.errors_in_a_row > 10:
-			try:
-				self.main_process()
-				self.errors_in_a_row = 0
-			except Exception as e:
-				if self.proxy == 'error':
-					print('что-то прокси закончилось')
-					print(f'self proxies{self.proxies}')
-					print(f'self circle proxies list{self.cirlce_proxy_list}')
-					break
-				current_time = datetime.now().strftime("%H:%M:%S")
-				e = traceback.format_exc().replace('\n', '&N&').replace('\t', '&TAB&')
-				error = f'{type(e)} + {e}'
-				row = [f'sku{self.saved_in_session}', self.oem, error, 'ошибка', '-', '-', self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
-				self.save_to_csv(row)
-				self.errors_in_a_row += 1
+			# try:
+			self.main_process()
+			self.errors_in_a_row = 0
+			# except Exception as e:
+			# 	if self.proxy == 'error':
+			# 		print('что-то прокси закончилось')
+			# 		print(f'self proxies{self.proxies}')
+			# 		print(f'self circle proxies list{self.cirlce_proxy_list}')
+			# 		break
+			# 	current_time = datetime.now().strftime("%H:%M:%S")
+			# 	e = traceback.format_exc().replace('\n', '&N&').replace('\t', '&TAB&')
+			# 	error = f'{type(e)} + {e}'
+			# 	row = [f'sku{self.saved_in_session}', self.oem, error, 'ошибка', '-', '-', self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
+			# 	self.save_to_csv(row)
+			# 	self.errors_in_a_row += 1
 
 
 		
@@ -161,7 +161,7 @@ class Parser():
 				#логика приложения вместо __name__=='__main__'
 				for sku, self.oem in enumerate(self.oems):
 					current_time = datetime.now().strftime("%H:%M:%S")
-					print(f'{self.saved_in_session}, {self.oem}, {current_time}, запросов {self.request_counter}, в сессии {self.all_requests}')
+					print(f'{self.saved_in_session}, {self.oem}, {current_time}, запросов {self.request_counter}, всего {self.all_requests}')
 					if self.request_counter == 0 or self.request_counter % self.VARIABLE_FOR_CHANGE_SERVER != 0:
 						check_to_change_proxy = self.first_page(sku, self.oem)
 						if check_to_change_proxy:
@@ -335,12 +335,17 @@ class Parser():
 			print(f'что-то страница не загружатеся, вот номер запроса {self.request_counter}')
 			return True
 		
-		self.version_checker()
 		if sku % 2 == 0:
 			self.driver.sleep(1)
 		else:
 			self.driver.sleep(3)
-		
+
+		try:
+			self.version_checker()
+		except TypeError: #Жду потому что иногда прокси багается и перезапускает страницу, а функция тригерится на пустой юрл
+			if self.driver.find_text("ЭМЕКС", timeout=10):
+				self.version_checker()
+	
 		title = self.driver.get_title().lower()
 		timeout_timer = 0
 		while title == 'результаты поиска' and timeout_timer != 30:
