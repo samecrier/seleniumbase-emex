@@ -404,8 +404,7 @@ class Parser():
 					extra_oems = ['нет доп оемов']
 				row = [f'SKU{self.saved_in_session}', main_oem, main_brand, main_description, ' // '.join(analog_descriptions_list), ', '.join(extra_oems), self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
 				self.save_to_csv(row)
-		
 		return None
+	
 if __name__ == '__main__':
-
 	test = Parser(not_first_setup=True, type_input=False, proxies=proxies, type_headless=True)
