@@ -220,6 +220,7 @@ class Parser():
 
 		return sorted(brands), sorted(descriptions), sorted(set(analogs_descriptions_list)), sorted(extra_oems)
 			
+	
 	def regular_oem_func(self, main_oem):
 		
 		self.request_counter += 1
@@ -371,7 +372,8 @@ class Parser():
 					extra_oems = ['нет доп оемов']
 				row = [f'SKU{sku}', main_oem, main_brand, main_description, ' // '.join(analog_descriptions_list), ', '.join(extra_oems), self.proxy, current_time]
 				self.save_to_csv(row)
+		
 		return None
-
 if __name__ == '__main__':
-	test = Parser(not_first_setup=True, input=False, proxies=proxies, type_headless=False)
+
+	test = Parser(not_first_setup=True, input=False, proxies=proxies, type_headless=True)
