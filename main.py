@@ -15,15 +15,20 @@ class Parser():
 
 	VARIABLE_FOR_CHANGE_SERVER = 550
 
-	def __init__(self, not_first_setup=True, input=False, proxies=False, type_headless=True, oems=oems):
+	def __init__(self, not_first_setup=True, type_input=False, proxies=False, type_headless=True, type_user_data=False, oems=oems):
 		
-		self.type_headless = type_headless
-		#check user data
-		self.input = input
-		self.user_data = self.launch_user_data()
+		#блок иницилизации
 		self.not_first_setup = not_first_setup #берет полный лист без анализа csv
-		self.saved_in_session = 0
-		self.oems = sorted(set(oems), key=oems.index)
+		self.input = type_input
+		self.type_headless = type_headless
+		self.oems = sorted(set(oems), key=oems.index) #формирую лист оемов без дубликатов
+		
+		#юзер дата
+		self.user_data = False
+		if type_user_data:
+			self.user_data = self.launch_user_data()
+		
+		#прокси блок
 		self.circle_proxy_list = []
 		self.proxies = proxies
 		if self.proxies:
@@ -33,15 +38,28 @@ class Parser():
 			self.proxy = proxies
 			print(f'запустил без прокси')
 		
+		#все счетчики
+		self.saved_in_session = 0
 		self.changes_of_proxy = 0
-		while self.oems:
+		self.errors_in_a_row = 0
+		self.all_requests = 0
+		
+		while self.oems or self.errors_in_a_row > 10:
 			try:
 				self.main_process()
+				self.errors_in_a_row = 0
 			except Exception as e:
+				if self.proxy == 'error':
+					print('что-то прокси закончилось')
+					print(f'self proxies{self.proxies}')
+					print(f'self circle proxies list{self.cirlce_proxy_list}')
+					break
 				current_time = datetime.now().strftime("%H:%M:%S")
+				e = traceback.format_exc().replace('\n', '&N&').replace('\t', '&TAB&')
 				error = f'{type(e)} + {e}'
-				row = ['sku_', self.oem, error, 'ошибка', 'ошибка', 'ошибка', self.proxy, current_time]
+				row = [f'sku{self.saved_in_session}', self.oem, error, 'ошибка', '-', '-', self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
 				self.save_to_csv(row)
+				self.errors_in_a_row += 1
 
 
 		
@@ -106,7 +124,6 @@ class Parser():
 				print(f'использую {self.proxy}, смена прокси номер {self.changes_of_proxy}')
 			else:
 				self.proxy = 'error'
-				print('что-то прокси закончились')
 
 	def refresh_list_oems(self):
 		if self.not_first_setup:
@@ -118,6 +135,16 @@ class Parser():
 				self.not_first_setup = True
 		print(f'Осталось пройти {len(self.oems)} оемов')
 
+	def version_checker(self):
+		siteversion = self.driver.get_cookie("siteversion")
+		location = self.driver.get_cookie("best-location")
+		switcher = self.driver.get_cookie("new-site-switcher")
+		if siteversion["value"] != "1" or location["value"] != "26473" or switcher["value"] != "small":
+			self.driver.delete_all_cookies()
+			self.driver.load_cookies(name="cookies.txt")
+			self.driver.refresh()
+			self.request_counter += 1
+			self.all_requests += 1
 
 	def main_process(self):
 		#initiliaze browser
@@ -134,14 +161,14 @@ class Parser():
 				#логика приложения вместо __name__=='__main__'
 				for sku, self.oem in enumerate(self.oems):
 					current_time = datetime.now().strftime("%H:%M:%S")
-					print(f'{sku}, {self.oem}, {current_time}, сохранено {self.saved_in_session}')
+					print(f'{self.saved_in_session}, {self.oem}, {current_time}, запросов {self.request_counter}, в сессии {self.all_requests}')
 					if self.request_counter == 0 or self.request_counter % self.VARIABLE_FOR_CHANGE_SERVER != 0:
 						check_to_change_proxy = self.first_page(sku, self.oem)
 						if check_to_change_proxy:
 							break
 					else:
-						print(f'сделал действий:{self.request_counter}')
 						break
+			print(f'пора менять прокси, сделал действий:{self.request_counter}')
 			self.change_proxy()
 		
 	def some_brands_func(self):
@@ -155,6 +182,7 @@ class Parser():
 			nonlocal analogs_descriptions_list
 			if oem_variable == '':
 				self.request_counter += 1
+				self.all_requests += 1
 				return
 			try:
 				brand, description, analog_descriptions_list, final_extra_oems_list = self.regular_oem_func(oem_variable)
@@ -224,6 +252,7 @@ class Parser():
 	def regular_oem_func(self, main_oem):
 		
 		self.request_counter += 1
+		self.all_requests += 1
 		if self.driver.is_element_visible('xpath', '//div[contains(@class, "error-container")]'):
 			return None
 		try:
@@ -306,6 +335,7 @@ class Parser():
 			print(f'что-то страница не загружатеся, вот номер запроса {self.request_counter}')
 			return True
 		
+		self.version_checker()
 		if sku % 2 == 0:
 			self.driver.sleep(1)
 		else:
@@ -325,7 +355,8 @@ class Parser():
 		if title == 'результаты поиска': #таймаут
 			print('таймаут')
 			self.request_counter += 1
-			row = [f'SKU{sku}', main_oem, 'таймаут', 'таймаут', 'таймаут', 'таймаут', self.proxy, current_time]
+			self.all_requests += 1
+			row = [f'SKU{self.saved_in_session}', main_oem, 'таймаут', 'таймаут', 'таймаут', 'таймаут', self.proxy, f'смен {self.changes_of_proxy}', f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
 			self.save_to_csv(row) #создать функцию
 		elif self.driver.is_element_visible('xpath', '//span[@jsselect="heading"]'): #дохлый прокси, не грузит страницу вообще
 			#title = 'emex.ru'
@@ -338,7 +369,8 @@ class Parser():
 		elif self.driver.is_element_visible("div[class='no-results'][style='']"): #нет в emex
 			print('нет в emex')
 			self.request_counter += 1
-			row = [f'SKU{sku}', main_oem, 'нет в emex', 'нет в emex', 'нет в emex', 'нет в emex', self.proxy, current_time]
+			self.all_requests += 1
+			row = [f'SKU{self.saved_in_session}', main_oem, 'нет в emex', 'нет в emex', 'нет в emex', 'нет в emex', self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
 			self.save_to_csv(row) #создать функцию
 		elif title == 'найдено несколько совпадений': #много брендов
 			print('много брендов')
@@ -347,12 +379,12 @@ class Parser():
 			except TypeError:
 				return True
 			if brands == []:
-				row = [f'SKU{sku}', main_oem, 'нет в emex', 'нет в emex', 'нет в emex', 'нет в emex', self.proxy, current_time]
+				row = [f'SKU{self.saved_in_session}', main_oem, 'нет в emex', 'нет в emex', 'нет в emex', 'нет в emex', self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
 				self.save_to_csv(row) #создать функцию
 			else:
 				if extra_oems == []:
 					extra_oems = ['нет доп оемов']
-				row = [f'SKU{sku}', main_oem, ' // '.join(brands), ' // '.join(descriptions), ' // '.join(analogs_descriptions_list), ' // '.join(extra_oems), self.proxy, current_time]
+				row = [f'SKU{self.saved_in_session}', main_oem, ' // '.join(brands), ' // '.join(descriptions), ' // '.join(analogs_descriptions_list), ' // '.join(extra_oems), self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
 				self.save_to_csv(row)
 		else: #обычный оем
 			print('обычный оем')
@@ -360,20 +392,20 @@ class Parser():
 				main_brand, main_description, analog_descriptions_list, extra_oems = self.regular_oem_func(main_oem)
 			except TypeError:
 				print('обычный, но оказалось нет в emex')
-				row = [f'SKU{sku}', main_oem, 'нет в emex', 'нет в emex', 'нет в emex', 'нет в emex', self.proxy, current_time]
+				row = [f'SKU{self.saved_in_session}', main_oem, 'нет в emex', 'нет в emex', 'нет в emex', 'нет в emex', self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
 				self.save_to_csv(row) #создать функцию
 			except UnboundLocalError:
 				print('что-то нет у него мейн бренда, видимо выдает другой оем')
-				row = [f'SKU{sku}', main_oem, 'нет в emex', 'нет в emex', 'нет в emex', 'нет в emex', self.proxy, current_time]
+				row = [f'SKU{self.saved_in_session}', main_oem, 'нет в emex', 'нет в emex', 'нет в emex', 'нет в emex', self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
 				self.save_to_csv(row) #создать функцию
 			else:
 				# analogs_list = self.analog_oem_func() #функциональность аналогов (но долгое время работы)
 				if extra_oems == []:
 					extra_oems = ['нет доп оемов']
-				row = [f'SKU{sku}', main_oem, main_brand, main_description, ' // '.join(analog_descriptions_list), ', '.join(extra_oems), self.proxy, current_time]
+				row = [f'SKU{self.saved_in_session}', main_oem, main_brand, main_description, ' // '.join(analog_descriptions_list), ', '.join(extra_oems), self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
 				self.save_to_csv(row)
 		
 		return None
 if __name__ == '__main__':
 
-	test = Parser(not_first_setup=True, input=False, proxies=proxies, type_headless=True)
+	test = Parser(not_first_setup=True, type_input=False, proxies=proxies, type_headless=True)
