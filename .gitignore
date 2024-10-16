@@ -4,6 +4,7 @@ chrome_profile/
 downloaded_files/
 datas/
 .idea/
+saved_cookies/
 test_emex.py
 test_google.py
 variables.py
