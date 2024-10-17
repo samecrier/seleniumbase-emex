@@ -45,21 +45,21 @@ class Parser():
 		self.all_requests = 0
 		
 		while self.oems or self.errors_in_a_row > 10:
-			# try:
-			self.main_process()
-			self.errors_in_a_row = 0
-			# except Exception as e:
-			# 	if self.proxy == 'error':
-			# 		print('что-то прокси закончилось')
-			# 		print(f'self proxies{self.proxies}')
-			# 		print(f'self circle proxies list{self.cirlce_proxy_list}')
-			# 		break
-			# 	current_time = datetime.now().strftime("%H:%M:%S")
-			# 	e = traceback.format_exc().replace('\n', '&N&').replace('\t', '&TAB&')
-			# 	error = f'{type(e)} + {e}'
-			# 	row = [f'sku{self.saved_in_session}', self.oem, error, 'ошибка', '-', '-', self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
-			# 	self.save_to_csv(row)
-			# 	self.errors_in_a_row += 1
+			try:
+				self.main_process()
+				self.errors_in_a_row = 0
+			except Exception as e:
+				if self.proxy == 'error':
+					print('что-то прокси закончилось')
+					print(f'self proxies{self.proxies}')
+					print(f'self circle proxies list{self.cirlce_proxy_list}')
+					break
+				current_time = datetime.now().strftime("%H:%M:%S")
+				e = traceback.format_exc().replace('\n', '&N&').replace('\t', '&TAB&')
+				error = f'{type(e)} + {e}'
+				row = [f'sku{self.saved_in_session}', self.oem, error, 'ошибка', '-', '-', self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
+				self.save_to_csv(row)
+				self.errors_in_a_row += 1
 
 
 		
