@@ -213,7 +213,7 @@ class Parser():
 		number_of_requests = len(self.driver.find_elements('xpath', '//div[contains(@class, "brand-list")]//div[contains(@class, "row")]//span[contains(@class, "link-like")]'))
 		
 		if number_of_requests:
-			print(f'сколько брендов в колбасе {number_of_requests}')
+			pass
 		else:
 			print('ничего не взяло из len_brands_row(мб не успело)')
 		
