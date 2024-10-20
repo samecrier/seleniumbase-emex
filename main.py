@@ -13,7 +13,7 @@ from datetime import datetime
 
 class Parser():
 
-	VARIABLE_FOR_CHANGE_SERVER = 550
+	VARIABLE_FOR_CHANGE_SERVER = 495
 
 	def __init__(self, not_first_setup=True, type_input=False, proxies=False, type_headless=True, type_user_data=False, oems=oems):
 		
