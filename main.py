@@ -1,6 +1,6 @@
 from seleniumbase import SB, BaseCase
 from pathlib import Path
-from seleniumbase.common.exceptions import NoSuchElementException as sb_NoSuchElementException, WebDriverException as sb_WebDriverException
+from seleniumbase.common.exceptions import NoSuchElementException as sb_NoSuchElementException, WebDriverException as sb_WebDriverException, TextNotVisibleException as sb_TextNotVisibleException
 from selenium.common.exceptions import NoSuchElementException , WebDriverException
 import os
 import re
@@ -343,9 +343,12 @@ class Parser():
 		try:
 			self.version_checker()
 		except TypeError: #Жду потому что иногда прокси багается и перезапускает страницу, а функция тригерится на пустой юрл
-			if self.driver.find_text("ЭМЕКС", timeout=10):
-				self.version_checker()
-	
+			try:
+				if self.driver.find_text("ЭМЕКС", timeout=10):
+					self.version_checker()
+			except sb_TextNotVisibleException:
+				return True
+
 		title = self.driver.get_title().lower()
 		timeout_timer = 0
 		while title == 'результаты поиска' and timeout_timer != 30:
