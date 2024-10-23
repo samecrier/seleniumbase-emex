@@ -346,16 +346,16 @@ class Parser():
 			self.driver.sleep(1)
 		else:
 			self.driver.sleep(3)
-		# try:
-		self.version_checker()
-		# except TypeError as e: #Жду потому что иногда прокси багается и перезапускает страницу, а функция тригерится на пустой юрл
-		# 	print(e)
-		# 	try:
-		# 		if self.driver.find_text("ЭМЕКС", timeout=10):
-		# 			self.version_checker()
-		# 	except sb_TextNotVisibleException as e:
-		# 		print(e)
-		# 		return True
+		try:
+			self.version_checker()
+		except TypeError as e: #Жду потому что иногда прокси багается и перезапускает страницу, а функция тригерится на пустой юрл
+			print(f'ОШИБКА{e}')
+			try:
+				if self.driver.find_text("ЭМЕКС", timeout=10):
+					self.version_checker()
+			except sb_TextNotVisibleException as e:
+				print(e)
+				return True
 
 		title = self.driver.get_title().lower()
 		timeout_timer = 0
@@ -423,4 +423,4 @@ class Parser():
 		return None
 	
 if __name__ == '__main__':
-	test = Parser(not_first_setup=True, type_input=False, proxies=proxies, type_headless=False)
+	test = Parser(not_first_setup=True, type_input=False, proxies=proxies, type_headless=True)
