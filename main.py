@@ -13,7 +13,7 @@ from datetime import datetime
 
 class Parser():
 
-	VARIABLE_FOR_CHANGE_SERVER = 3
+	VARIABLE_FOR_CHANGE_SERVER = 495
 
 	def __init__(self, not_first_setup=True, type_input=False, proxies=False, type_headless=True, type_user_data=False, oems=oems):
 		
@@ -140,7 +140,6 @@ class Parser():
 		siteversion = self.driver.get_cookie("siteversion")
 		location = self.driver.get_cookie("best-location")
 		switcher = self.driver.get_cookie("new-site-switcher")
-		print(siteversion, location, switcher, self.driver.get_current_url())
 		if siteversion["value"] != "1" or location["value"] != "26473" or switcher["value"] != "small":
 			self.driver.delete_all_cookies()
 			self.driver.load_cookies(name="cookies.txt")
@@ -332,13 +331,13 @@ class Parser():
 		
 		#вызов первой страницы
 		try:
+			self.driver.open(f'https://emex.ru/f?detailNum={main_oem}&packet=-1')
 			if sku == 0:
 				seconds_counter = 0
 				while self.driver.get_current_url() == 'chrome-extension://neajdppkdcdipfabeoofebfddakdcjhd/audio.html' and seconds_counter<60:
 					self.driver.sleep(1)
 					seconds_counter += 1
-				
-			self.driver.open(f'https://emex.ru/f?detailNum={main_oem}&packet=-1')
+					print(seconds_counter)
 		except WebDriverException:
 			print(f'что-то страница не загружатеся, вот номер запроса {self.request_counter}')
 			return True
