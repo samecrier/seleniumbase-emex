@@ -334,7 +334,7 @@ class Parser():
 			self.driver.open(f'https://emex.ru/f?detailNum={main_oem}&packet=-1')
 			if sku == 0:
 				seconds_counter = 0
-				while self.driver.get_current_url() == 'chrome-extension://neajdppkdcdipfabeoofebfddakdcjhd/audio.html' and seconds_counter<60:
+				while 'emex.ru' not in self.driver.get_current_url() and seconds_counter<60:
 					self.driver.sleep(1)
 					seconds_counter += 1
 					print(seconds_counter)
