@@ -140,6 +140,13 @@ class Parser():
 		siteversion = self.driver.get_cookie("siteversion")
 		location = self.driver.get_cookie("best-location")
 		switcher = self.driver.get_cookie("new-site-switcher")
+		timeout = 0
+		while siteversion == None and timeout < 30:
+			siteversion = self.driver.get_cookie("siteversion")
+			location = self.driver.get_cookie("best-location")
+			switcher = self.driver.get_cookie("new-site-switcher")
+			timeout += 1
+
 		if siteversion["value"] != "1" or location["value"] != "26473" or switcher["value"] != "small":
 			self.driver.delete_all_cookies()
 			self.driver.load_cookies(name="cookies.txt")
@@ -153,7 +160,7 @@ class Parser():
 			
 			self.refresh_list_oems() #обновляю список нужных оемов
 			self.request_counter = 0 #счетчик запросов
-			with SB(user_data_dir=self.user_data, uc=True, proxy=self.proxy, page_load_strategy="eager", headless2=self.type_headless,  binary_location=self.browser_location) as sb:
+			with SB(user_data_dir=self.user_data, uc=True, proxy=self.proxy, page_load_strategy="normal", headless2=self.type_headless) as sb:
 				if self.input:
 					x = input('Введите Enter для начала:')
 				self.driver = sb
@@ -334,10 +341,16 @@ class Parser():
 			self.driver.open(f'https://emex.ru/f?detailNum={main_oem}&packet=-1')
 			if sku == 0:
 				seconds_counter = 0
-				while 'emex.ru' not in self.driver.get_current_url() and seconds_counter<60:
-					self.driver.sleep(1)
-					seconds_counter += 1
-					print(seconds_counter)
+				while 'emex.ru' not in self.driver.get_current_url() and seconds_counter < 60:
+					print(f'ВОШЕЛ В WHILE {seconds_counter/5+1} раз')
+					self.driver.sleep(5)
+					self.driver.open(f'https://emex.ru/f?detailNum={main_oem}&packet=-1')
+					url_error = self.driver.get_current_url()
+					current_time = datetime.now().strftime("%H_%M_%S") 
+					self.driver.save_screenshot(f'errors\\js_error{seconds_counter/5+1}_{url_error}_{current_time}.png')
+					self.driver.sleep(5)
+					seconds_counter += 5
+				self.version_checker()
 		except WebDriverException:
 			print(f'что-то страница не загружатеся, вот номер запроса {self.request_counter}')
 			return True
@@ -345,16 +358,7 @@ class Parser():
 			self.driver.sleep(1)
 		else:
 			self.driver.sleep(3)
-		try:
-			self.version_checker()
-		except TypeError as e: #Жду потому что иногда прокси багается и перезапускает страницу, а функция тригерится на пустой юрл
-			print(f'ОШИБКА {e}')
-			try:
-				if self.driver.find_text("ЭМЕКС", timeout=10):
-					self.version_checker()
-			except sb_TextNotVisibleException as e:
-				print(e)
-				return True
+
 
 		title = self.driver.get_title().lower()
 		timeout_timer = 0
