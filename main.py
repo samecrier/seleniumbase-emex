@@ -52,7 +52,7 @@ class Parser():
 				if self.proxy == 'error':
 					print('что-то прокси закончилось')
 					print(f'self proxies{self.proxies}')
-					print(f'self circle proxies list{self.cirlce_proxy_list}')
+					print(f'self circle proxies list{self.circle_proxy_list}')
 					break
 				current_time = datetime.now().strftime("%H:%M:%S")
 				e = traceback.format_exc().replace('\n', '&N&').replace('\t', '&TAB&')
