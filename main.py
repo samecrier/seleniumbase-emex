@@ -13,7 +13,7 @@ from datetime import datetime
 
 class Parser():
 
-	VARIABLE_FOR_CHANGE_SERVER = 495
+	VARIABLE_FOR_CHANGE_SERVER = 3
 
 	def __init__(self, not_first_setup=True, type_input=False, proxies=False, type_headless=True, type_user_data=False, oems=oems):
 		
@@ -22,6 +22,8 @@ class Parser():
 		self.input = type_input
 		self.type_headless = type_headless
 		self.oems = sorted(set(oems), key=oems.index) #формирую лист оемов без дубликатов
+
+		self.browser_location = 'C:\\Program Files\\Google\\Chrome Beta\\Application\\chrome.exe'
 		
 		#юзер дата
 		self.user_data = False
@@ -111,8 +113,7 @@ class Parser():
 	def change_proxy(self):
 		self.changes_of_proxy += 1
 		print(f'смена прокси номер {self.changes_of_proxy}')
-		if self.request_counter > 0:
-			self.circle_proxy_list.append(self.proxy)
+		self.circle_proxy_list.append(self.proxy)
 		if self.proxies:
 			self.proxy = self.proxies.pop(0)
 			print(f'использую {self.proxy}')
@@ -139,6 +140,7 @@ class Parser():
 		siteversion = self.driver.get_cookie("siteversion")
 		location = self.driver.get_cookie("best-location")
 		switcher = self.driver.get_cookie("new-site-switcher")
+		print(siteversion, location, switcher, self.driver.get_current_url())
 		if siteversion["value"] != "1" or location["value"] != "26473" or switcher["value"] != "small":
 			self.driver.delete_all_cookies()
 			self.driver.load_cookies(name="cookies.txt")
@@ -152,7 +154,7 @@ class Parser():
 			
 			self.refresh_list_oems() #обновляю список нужных оемов
 			self.request_counter = 0 #счетчик запросов
-			with SB(user_data_dir=self.user_data, uc=True, proxy=self.proxy, page_load_strategy="eager", headless2=self.type_headless) as sb:
+			with SB(user_data_dir=self.user_data, uc=True, proxy=self.proxy, page_load_strategy="eager", headless2=self.type_headless,  binary_location=self.browser_location) as sb:
 				if self.input:
 					x = input('Введите Enter для начала:')
 				self.driver = sb
@@ -330,24 +332,30 @@ class Parser():
 		
 		#вызов первой страницы
 		try:
+			if sku == 0:
+				seconds_counter = 0
+				while self.driver.get_current_url() == 'chrome-extension://neajdppkdcdipfabeoofebfddakdcjhd/audio.html' and seconds_counter<60:
+					self.driver.sleep(1)
+					seconds_counter += 1
+				
 			self.driver.open(f'https://emex.ru/f?detailNum={main_oem}&packet=-1')
 		except WebDriverException:
 			print(f'что-то страница не загружатеся, вот номер запроса {self.request_counter}')
 			return True
-		
 		if sku % 2 == 0:
 			self.driver.sleep(1)
 		else:
 			self.driver.sleep(3)
-
-		try:
-			self.version_checker()
-		except TypeError: #Жду потому что иногда прокси багается и перезапускает страницу, а функция тригерится на пустой юрл
-			try:
-				if self.driver.find_text("ЭМЕКС", timeout=10):
-					self.version_checker()
-			except sb_TextNotVisibleException:
-				return True
+		# try:
+		self.version_checker()
+		# except TypeError as e: #Жду потому что иногда прокси багается и перезапускает страницу, а функция тригерится на пустой юрл
+		# 	print(e)
+		# 	try:
+		# 		if self.driver.find_text("ЭМЕКС", timeout=10):
+		# 			self.version_checker()
+		# 	except sb_TextNotVisibleException as e:
+		# 		print(e)
+		# 		return True
 
 		title = self.driver.get_title().lower()
 		timeout_timer = 0
@@ -415,4 +423,4 @@ class Parser():
 		return None
 	
 if __name__ == '__main__':
-	test = Parser(not_first_setup=True, type_input=False, proxies=proxies, type_headless=True)
+	test = Parser(not_first_setup=True, type_input=False, proxies=proxies, type_headless=False)
