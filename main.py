@@ -349,7 +349,7 @@ class Parser():
 		try:
 			self.version_checker()
 		except TypeError as e: #Жду потому что иногда прокси багается и перезапускает страницу, а функция тригерится на пустой юрл
-			print(f'ОШИБКА{e}')
+			print(f'ОШИБКА {e}')
 			try:
 				if self.driver.find_text("ЭМЕКС", timeout=10):
 					self.version_checker()
