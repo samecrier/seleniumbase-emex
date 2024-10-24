@@ -338,13 +338,13 @@ class Parser():
 		
 		#вызов первой страницы
 		try:
-			self.driver.open(f'https://emex.ru/f?detailNum={main_oem}&packet=-1')
+			self.driver.driver.default_get(f'https://emex.ru/f?detailNum={main_oem}&packet=-1')
 			if sku == 0:
 				seconds_counter = 0
 				while 'emex.ru' not in self.driver.get_current_url() and seconds_counter < 60:
 					print(f'ВОШЕЛ В WHILE {seconds_counter/5+1} раз')
 					self.driver.sleep(5)
-					self.driver.open(f'https://emex.ru/f?detailNum={main_oem}&packet=-1')
+					self.driver.driver.default_get(f'https://emex.ru/f?detailNum={main_oem}&packet=-1')
 					url_error = self.driver.get_current_url()
 					current_time = datetime.now().strftime("%H_%M_%S") 
 					self.driver.save_screenshot(f'errors\\js_error{seconds_counter/5+1}_{url_error}_{current_time}.png')
@@ -427,4 +427,4 @@ class Parser():
 		return None
 	
 if __name__ == '__main__':
-	test = Parser(not_first_setup=True, type_input=False, proxies=proxies, type_headless=True)
+	test = Parser(not_first_setup=True, type_input=False, proxies=proxies, type_headless=False)
