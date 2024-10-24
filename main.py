@@ -415,6 +415,7 @@ class Parser():
 				self.save_to_csv(row) #создать функцию
 			except UnboundLocalError:
 				print('что-то нет у него мейн бренда, видимо выдает другой оем')
+				self.driver.save_screenshot(f'errors\\no_brand_error{main_oem}.png')
 				row = [f'SKU{self.saved_in_session}', main_oem, 'нет в emex', 'нет в emex', 'нет в emex', 'нет в emex', self.proxy, f'смен {self.changes_of_proxy}', f'локально зап: {self.request_counter}', f'всего зап: {self.all_requests}', current_time]
 				self.save_to_csv(row) #создать функцию
 			else:
