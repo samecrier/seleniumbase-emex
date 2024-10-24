@@ -3,6 +3,7 @@ __pycache__/
 chrome_profile/
 downloaded_files/
 datas/
+errors/
 .idea/
 saved_cookies/
 test_emex.py
