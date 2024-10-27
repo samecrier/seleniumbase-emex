@@ -147,7 +147,7 @@ class Parser():
 			switcher = self.driver.get_cookie("new-site-switcher")
 			timeout += 1
 
-		if siteversion["value"] != "1" or location["value"] != "26473" or switcher["value"] != "small":
+		if siteversion["value"] != "1":
 			self.driver.delete_all_cookies()
 			self.driver.load_cookies(name="cookies.txt")
 			self.driver.refresh()
@@ -427,4 +427,4 @@ class Parser():
 		return None
 	
 if __name__ == '__main__':
-	test = Parser(not_first_setup=True, type_input=False, proxies=proxies, type_headless=True)
+	test = Parser(not_first_setup=True, type_input=False, proxies=proxies, type_headless=False)
